@@ -1,0 +1,22 @@
+--- a/include/rtl8812a_recv.h	2026-09-28 23:46:02.000000000 -0400
++++ b/include/rtl8812a_recv.h	2026-11-17 01:39:15.944425144 -0500
+@@ -25,7 +25,7 @@
+ 				#ifdef CONFIG_PREALLOC_RX_SKB_BUFFER
+ 					#define MAX_RECVBUF_SZ (rtw_rtkm_get_buff_size()) /*depend rtkm*/
+ 				#else
+-					#define MAX_RECVBUF_SZ (32768)  /*32k*/
++					#define MAX_RECVBUF_SZ (0x20000)  /*128k*/
+ 				#endif
+ 				/* #define MAX_RECVBUF_SZ (24576) */ /* 24k */
+ 				/* #define MAX_RECVBUF_SZ (20480) */ /* 20K */
+--- a/include/rtl_autoconf.h	2026-09-28 23:46:02.000000000 -0400
++++ b/include/rtl_autoconf.h	2026-11-17 01:39:16.797447340 -0500
+@@ -216,7 +216,7 @@
+ 
+ #ifndef CONFIG_MINIMAL_MEMORY_USAGE
+ 	#define CONFIG_USB_TX_AGGREGATION	1
+-	#define CONFIG_USB_RX_AGGREGATION	1
++	/* #define CONFIG_USB_RX_AGGREGATION	1 */
+ #endif
+ 
+ /* #define CONFIG_REDUCE_USB_TX_INT	1 */	/* Trade-off: Improve performance, but may cause TX URBs blocked by USB Host/Bus driver on few platforms. */

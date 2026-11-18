@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenIPC wfb-ng RX to HDMI (with stream-loss watchdog)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/wfb-watchdog.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

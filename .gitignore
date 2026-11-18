@@ -1,0 +1,8 @@
+*.key
+gs.key
+drone.key
+*.log
+*.raw
+*.bin
+boot_min.img
+.DS_Store
