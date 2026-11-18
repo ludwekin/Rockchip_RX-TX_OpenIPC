@@ -20,6 +20,7 @@ sudo systemctl enable --now wfb-hdmi.service
 |---|---|
 | `wfb-watchdog.sh` | 推荐；自动配置 + 收流 + 播放 + 断流重连 |
 | `wfb-dsi-osd.py` | DSI 480x800 横屏 + 半透明性能 OSD（WFB/RK3566，触摸翻页） |
+| `wfb-player-watchdog.sh` | 监控 OSD 心跳，播放器卡死后自动重启（wfb_rx 不动） |
 | `wfb-hdmi.sh` | 一次性启动（HDMI；DSI 请用 watchdog） |
 | `f3.sh` | MPP 解码性能对比（no fast / queue / jb latency） |
 | `openipc-rx-setup.sh` | 旧版 monitor/channel 设置脚本 |

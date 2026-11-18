@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenIPC OSD player watchdog (restart player if metrics heartbeat stalls)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/wfb-player-watchdog.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

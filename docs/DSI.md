@@ -73,6 +73,17 @@ udpsrc 5600 ... ! rtpjitterbuffer ! rtph265depay ! h265parse
 
 `wfb-hdmi.sh` 是一次性 HDMI 版；DSI 请用 `wfb-watchdog.sh`（或 systemd 服务）。
 
+### 播放器卡死自动恢复
+
+MPP/DSI 管线偶发卡死时，`openipc-kms-osd.py` 的 `tick` 会停止更新 `/tmp/osd-metrics.log`。
+`wfb-player-watchdog.sh` 监控这个心跳文件，超过 5 秒不更新就重启 OSD 播放器（`wfb_rx` 不动）：
+
+```bash
+install -m755 scripts/wfb-player-watchdog.sh /usr/local/sbin/
+cp systemd/wfb-player-watchdog.service /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now wfb-player-watchdog
+```
+
 ## 触摸 CST128A
 
 ### 安装
