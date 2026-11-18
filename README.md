@@ -50,6 +50,7 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 │   └── README.md
 ├── scripts/
 │   ├── wfb-watchdog.sh         # 推荐：自动配置 + 收流 + 播放 + 断流重连
+│   ├── wfb-dsi-osd.py          # DSI 480x800 横屏 + 半透明性能 OSD + 触摸翻页
 │   ├── wfb-hdmi.sh             # 一次性启动版
 │   ├── f3.sh                   # MPP 解码性能对比测试
 │   ├── openipc-rx-setup.sh     # 旧版 monitor/channel 设置
@@ -206,14 +207,14 @@ cat /proc/device-tree/hdmi@fe0a0000/status  # disabled
 cat /sys/class/drm/card0-DSI-1/status       # connected
 ```
 
-`wfb-watchdog.sh` 会自动识别 DSI，并用 480x800 管线：
+`wfb-watchdog.sh` 会自动识别 DSI，启动 `scripts/wfb-dsi-osd.py`：
 
-```
-... ! mppvideodec ! queue leaky=downstream max-size-buffers=1 ...
-    ! videoconvert ! videoflip method=counterclockwise
-    ! videoscale add-borders=true
-    ! video/x-raw,width=480,height=800 ! kmssink sync=false
-```
+- 视频 1280x720 横屏，`videoscale add-borders` 到 **480x270**，480x800 面板上下留黑边；
+- OSD **400x240（1/4 屏）** 半透明黑底（0.45），横向；
+- 触摸（CST128A）切换两页：
+  - WFB：CH/频率、RSSI、码率、RTP p/s、LOST、FPS、STREAM；
+  - RK3566：CPU%/频率、LOAD、SOC/GPU 温度、内存、DDR/GPU/NPU/VDEC、UP；
+- 不使用 `mppvideodec fast-mode=true`（会卡第一帧）。
 
 触摸 CST128A（i2c1 @0x38）：
 

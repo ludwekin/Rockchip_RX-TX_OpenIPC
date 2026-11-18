@@ -12,25 +12,21 @@ start_rx() {
     nohup wfb_rx -K /etc/gs.key -i 7669206 -p 0 -u 5600 "$IF" >"$LOG" 2>&1 &
 }
 
+player_running() {
+    if [ "$(cat /sys/class/drm/card0-DSI-1/status 2>/dev/null)" = "connected" ]; then
+        pgrep -f 'wfb-dsi-osd.py' >/dev/null
+    else
+        pgrep -x gst-launch-1.0 >/dev/null
+    fi
+}
+
 start_player() {
     pkill -9 -x gst-launch-1.0 2>/dev/null
+    pkill -9 -f 'wfb-dsi-osd.py' 2>/dev/null
     sleep 1
     if [ "$(cat /sys/class/drm/card0-DSI-1/status 2>/dev/null)" = "connected" ]; then
-        # 3.1" MIPI DSI 480x800: rotate landscape -> portrait, fit with borders
-        nohup gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
-            caps="application/x-rtp, media=(string)video, payload=(int)97, clock-rate=(int)90000, encoding-name=(string)H265" \
-            ! rtpjitterbuffer latency=0 mode=none \
-            ! rtph265depay ! h265parse \
-            ! video/x-h265,stream-format=byte-stream,alignment=au \
-            ! mppvideodec \
-            ! queue leaky=downstream max-size-buffers=1 max-size-time=0 max-size-bytes=0 \
-            ! videoconvert \
-            ! videoflip method=counterclockwise \
-            ! videoscale add-borders=true \
-            ! video/x-raw,width=480,height=800 \
-            ! kmssink sync=false >"$PLAYLOG" 2>&1 &
+        nohup /usr/bin/python3 /usr/local/sbin/wfb-dsi-osd.py >"$PLAYLOG" 2>&1 &
     else
-        # HDMI
         nohup gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
             caps="application/x-rtp, media=(string)video, payload=(int)97, clock-rate=(int)90000, encoding-name=(string)H265" \
             ! rtpjitterbuffer latency=0 mode=none \
@@ -98,7 +94,7 @@ modprobe 88XXau rtw_usb_rxagg_mode=0 2>/dev/null
 ensure_monitor
 pgrep -x wfb_rx >/dev/null || start_rx
 sleep 2
-pgrep -x gst-launch-1.0 >/dev/null || start_player
+player_running || start_player
 
 while true; do
     now=$(date +%s)

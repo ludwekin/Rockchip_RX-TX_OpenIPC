@@ -280,15 +280,17 @@ grep -E 'SESSION|PKT|Unable to decrypt' /tmp/wfb_rx.log | tail
 - 内核只有一个 CRTC/VP0：**HDMI 和 DSI 不能同时用**；
   HDMI 刷 `boot4-hdmi.itb`，DSI 刷 `boot4-dsi.itb`（#4 内核 + DSI DTB）。
 - DSI 模式：`480x800p60`，`Connector: DSI-1`，`Video Port0 ACTIVE`。
-- DSI 管线（watchdog 自动识别）：
+- DSI 管线（watchdog 自动启动 `wfb-dsi-osd.py`）：
 
 ```
-... ! mppvideodec ! queue leaky=downstream max-size-buffers=1 ...
-    ! videoconvert ! videoflip method=counterclockwise
-    ! videoscale add-borders=true
-    ! video/x-raw,width=480,height=800 ! kmssink sync=false
+... ! mppvideodec ! queue ...
+    ! videoconvert ! videoscale add-borders=true ! video/x-raw,width=480,height=800
+    ! videoconvert ! video/x-raw,format=BGRA
+    ! cairooverlay name=osd ! kmssink sync=false
 ```
 
+- 视频 480x270 横屏居中，上下黑边；OSD 400x240（1/4 屏）半透明。
+- 触摸 CST128A 切换 WFB/RK3566 两页。
 - 仍然不要用 `mppvideodec fast-mode=true`。
 - 触摸 CST128A：i2c1 `i2c@fe5a0000` @0x38；`cst128a_ts.ko` +
   `/etc/modules-load.d/cst128a.conf`；输入设备通常 `/dev/input/event5`。

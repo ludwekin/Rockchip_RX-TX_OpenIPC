@@ -50,28 +50,26 @@ Video Port0: ACTIVE
 
 ## 播放（DSI）
 
-`wfb-watchdog.sh` 会自动检测 `card0-DSI-1`，并使用 DSI 管线：
+`wfb-watchdog.sh` 会自动检测 `card0-DSI-1`，启动 `scripts/wfb-dsi-osd.py`
+（GStreamer + cairooverlay + 触摸）：
 
-```bash
-gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
-  caps="application/x-rtp, media=(string)video, payload=(int)97, clock-rate=(int)90000, encoding-name=(string)H265" \
-  ! rtpjitterbuffer latency=0 mode=none \
-  ! rtph265depay ! h265parse \
-  ! video/x-h265,stream-format=byte-stream,alignment=au \
-  ! mppvideodec \
-  ! queue leaky=downstream max-size-buffers=1 max-size-time=0 max-size-bytes=0 \
-  ! videoconvert \
-  ! videoflip method=counterclockwise \
-  ! videoscale add-borders=true \
-  ! video/x-raw,width=480,height=800 \
-  ! kmssink sync=false
+- 视频 1280x720 横屏，`videoscale add-borders` 缩放到 **480x270**，480x800 面板上下留黑边；
+- OSD **400x240（1/4 屏）** 半透明黑底（0.45），横向；
+- 触摸（CST128A，`event5`）切换两页：
+  - 第 1 页 WFB：CH/频率、RSSI、码率、RTP p/s、LOST、FPS、STREAM；
+  - 第 2 页 RK3566：CPU%/频率、LOAD、SOC/GPU 温度、内存、DDR/GPU/NPU/VDEC、UP；
+- 半透明是 `cairooverlay` 画的，不是 `textoverlay` 的实心黑底；
+- **不要用 `mppvideodec fast-mode=true`**（会卡第一帧）。
+
+核心管线：
+
 ```
-
-- 面板是竖屏 480x800，视频是横屏；`videoflip counterclockwise` + `videoscale add-borders`
-  旋转并等比缩放，留黑边；
-- **不要用 `mppvideodec fast-mode=true`**（会卡第一帧）；
-- DSI 的 `kmssink` 不需要 `force-modesetting`（模式由面板固定 480x800）；
-- 如果方向不对，改 `videoflip method=clockwise|horizontal-flip|vertical-flip`。
+udpsrc 5600 ... ! rtpjitterbuffer ! rtph265depay ! h265parse
+! mppvideodec ! queue leaky ...
+! videoconvert ! videoscale add-borders=true ! video/x-raw,width=480,height=800
+! videoconvert ! video/x-raw,format=BGRA
+! cairooverlay name=osd ! kmssink sync=false
+```
 
 `wfb-hdmi.sh` 是一次性 HDMI 版；DSI 请用 `wfb-watchdog.sh`（或 systemd 服务）。
 
