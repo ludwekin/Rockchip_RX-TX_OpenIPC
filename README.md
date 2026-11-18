@@ -26,7 +26,8 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 | wfb-ng | ~23.08，`/usr/local/bin/wfb_rx` |
 | 天空端 | OpenIPC + wfb-ng TX，H265 1280x720@30，信道 161 HT20 |
 | 显示 | HDMI 1280x720p60，`kmssink` + MPP 硬解 |
-| 实测 | RSSI -22 ~ -28 dBm，`wfb_rx` 正常收包，HDMI 出图 |
+| DSI 屏 | 3.1" MIPI DSI 480x800，CST128A 触摸（i2c1 @0x38） |
+| 实测 | RSSI -22 ~ -28 dBm，`wfb_rx` 正常收包，HDMI / DSI 均出图 |
 
 > 版本相关：驱动必须和**运行中的内核**匹配。把为旧内核编译的 `88XXau.ko` 装到新内核上，
 > 高码率收流时会 `skb_over_panic` 直接内核崩溃。换内核后请用本仓库补丁重新编译驱动。
@@ -39,6 +40,7 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 .
 ├── boot/
 │   ├── boot4-hdmi.itb          # 11/4 #4 内核 + HDMI DTB 的 FIT（写 p3）
+│   ├── boot4-dsi.itb           # 11/4 #4 内核 + DSI 480x800 DTB（写 p3）
 │   └── README.md               # 刷写/重建说明
 ├── driver/
 │   ├── 88XXau.ko               # 预编译驱动（vermagic 6.1.141 SMP mod_unload aarch64）
@@ -58,9 +60,12 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 │   └── wfb-hdmi.service        # 运行 wfb-watchdog.sh
 ├── tools/
 │   ├── patch_inplace.py        # 替换 FIT 内 fdt（保持布局，重算 hash）
-│   └── fdt-orig.dtb            # HDMI 可用的原始 DTB（HDMI okay / DSI disabled）
+│   ├── fdt-orig.dtb            # HDMI DTB（HDMI okay / DSI disabled）
+│   └── fdt-dsi.dtb             # DSI 480x800 DTB（DSI okay / HDMI disabled）
+├── touch/                      # CST128A 触摸驱动/模块/开机加载配置
 ├── docs/
 │   ├── DEBUG_NOTES.md          # 详细踩坑记录
+│   ├── DSI.md                  # 3.1" MIPI DSI + 触摸
 │   └── AIR_TX.md               # 天空端 TX 侧参数模板
 └── keys/README.md              # 密钥生成/配对说明（不含密钥）
 ```
@@ -69,7 +74,10 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 
 ## 3. 快速开始
 
-### 3.1 刷 boot（HDMI 输出）
+### 3.1 刷 boot（HDMI 或 DSI）
+
+> 本内核只有一个 CRTC：HDMI 和 DSI 不能同时用。HDMI 用 `boot4-hdmi.itb`，
+> DSI 用 `boot4-dsi.itb`；DSI 详细步骤见 3.6 / `docs/DSI.md`。
 
 目标板的分区：
 
@@ -172,6 +180,53 @@ gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
 - `rtpjitterbuffer latency=0` 是最低延迟；网络抖动大时改成 `10~50`。
 - HDMI 输出为 1280x720p60（视频 1280x720@30）。
 
+### 3.6 3.1" MIPI DSI（480x800）
+
+同一路流也可以输出到 3.1" MIPI DSI 屏（HDMI 关闭）。这块内核只有一个 CRTC，
+**HDMI 和 DSI 不能同时用**，需要刷对应的 boot：
+
+| 显示 | boot | DTB |
+|---|---|---|
+| HDMI 1280x720p60 | `boot/boot4-hdmi.itb` | `tools/fdt-orig.dtb` |
+| MIPI DSI 480x800 | `boot/boot4-dsi.itb` | `tools/fdt-dsi.dtb` |
+
+刷 DSI（板子 Linux 里 dd 到 p3）：
+
+```bash
+adb push boot/boot4-dsi.itb /tmp/
+adb shell 'dd if=/tmp/boot4-dsi.itb of=/dev/mmcblk0p3 bs=1M conv=fsync; sync'
+adb shell reboot
+```
+
+确认：
+
+```bash
+cat /proc/device-tree/dsi@fe070000/status   # okay
+cat /proc/device-tree/hdmi@fe0a0000/status  # disabled
+cat /sys/class/drm/card0-DSI-1/status       # connected
+```
+
+`wfb-watchdog.sh` 会自动识别 DSI，并用 480x800 管线：
+
+```
+... ! mppvideodec ! queue leaky=downstream max-size-buffers=1 ...
+    ! videoconvert ! videoflip method=counterclockwise
+    ! videoscale add-borders=true
+    ! video/x-raw,width=480,height=800 ! kmssink sync=false
+```
+
+触摸 CST128A（i2c1 @0x38）：
+
+```bash
+cp touch/cst128a_ts.ko /lib/modules/$(uname -r)/extra/
+depmod -a
+cp touch/cst128a.conf /etc/modules-load.d/cst128a.conf
+modprobe cst128a_ts
+evtest /dev/input/event5
+```
+
+详细说明见 `docs/DSI.md`。
+
 ---
 
 ## 4. 天空端（TX）需要匹配的参数
@@ -198,6 +253,8 @@ gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
 | `Unable to decrypt packet` / 无画面 | `gs.key` 和天空端 `drone.key` 不配对；正确时日志会有 `SESSION`，错误时会大量 decrypt |
 | 只出第一帧 | `mppvideodec fast-mode=true`；改成默认（无 fast-mode） |
 | HDMI 黑屏 / DRM 不 ACTIVE | 缺 `videoconvert` 或 `force-modesetting`；检查 `cat /sys/kernel/debug/dri/0/summary` |
+| DSI 黑屏 | 当前 boot 是 HDMI 版；刷 `boot4-dsi.itb`（内核只有一个 CRTC，HDMI/DSI 互斥） |
+| 触摸无反应 | 加载 `cst128a_ts`，检查 DTB `i2c@fe5a0000/tp@38` 和 `/dev/input/event5`；见 `docs/DSI.md` |
 | 画面卡住、天空端重启后不恢复 | 运行 `wfb-watchdog.sh`（会自动重启 `wfb_rx` + 播放器） |
 | 板子/电脑重启、USB 掉 | 供电不足。USB2 口只有 500mA，8812AU 收流时电流冲高；用**带电源的 USB Hub** 或 USB3 蓝口 |
 | 内核 panic `skb_over_panic` | 驱动和内核不匹配；用本仓库补丁针对当前内核重编 |

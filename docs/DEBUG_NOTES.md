@@ -275,6 +275,27 @@ grep -E 'SESSION|PKT|Unable to decrypt' /tmp/wfb_rx.log | tail
 
 ---
 
+## 11. 3.1" MIPI DSI 480x800 / CST128A 触摸
+
+- 内核只有一个 CRTC/VP0：**HDMI 和 DSI 不能同时用**；
+  HDMI 刷 `boot4-hdmi.itb`，DSI 刷 `boot4-dsi.itb`（#4 内核 + DSI DTB）。
+- DSI 模式：`480x800p60`，`Connector: DSI-1`，`Video Port0 ACTIVE`。
+- DSI 管线（watchdog 自动识别）：
+
+```
+... ! mppvideodec ! queue leaky=downstream max-size-buffers=1 ...
+    ! videoconvert ! videoflip method=counterclockwise
+    ! videoscale add-borders=true
+    ! video/x-raw,width=480,height=800 ! kmssink sync=false
+```
+
+- 仍然不要用 `mppvideodec fast-mode=true`。
+- 触摸 CST128A：i2c1 `i2c@fe5a0000` @0x38；`cst128a_ts.ko` +
+  `/etc/modules-load.d/cst128a.conf`；输入设备通常 `/dev/input/event5`。
+- 初始化可能有两条 `hyn_cst128_ts_write: write error, addr=0x0/0xa4`，
+  但 input 会注册，触摸事件正常。
+- 详细步骤见 `docs/DSI.md`，触摸文件在 `touch/`。
+
 ## 附：常用确认命令
 
 ```bash

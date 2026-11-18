@@ -15,15 +15,32 @@ start_rx() {
 start_player() {
     pkill -9 -x gst-launch-1.0 2>/dev/null
     sleep 1
-    nohup gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
-        caps="application/x-rtp, media=(string)video, payload=(int)97, clock-rate=(int)90000, encoding-name=(string)H265" \
-        ! rtpjitterbuffer latency=0 mode=none \
-        ! rtph265depay ! h265parse \
-        ! video/x-h265,stream-format=byte-stream,alignment=au \
-        ! mppvideodec \
-        ! queue leaky=downstream max-size-buffers=1 max-size-time=0 max-size-bytes=0 \
-        ! videoconvert \
-        ! kmssink force-modesetting=true sync=false >"$PLAYLOG" 2>&1 &
+    if [ "$(cat /sys/class/drm/card0-DSI-1/status 2>/dev/null)" = "connected" ]; then
+        # 3.1" MIPI DSI 480x800: rotate landscape -> portrait, fit with borders
+        nohup gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
+            caps="application/x-rtp, media=(string)video, payload=(int)97, clock-rate=(int)90000, encoding-name=(string)H265" \
+            ! rtpjitterbuffer latency=0 mode=none \
+            ! rtph265depay ! h265parse \
+            ! video/x-h265,stream-format=byte-stream,alignment=au \
+            ! mppvideodec \
+            ! queue leaky=downstream max-size-buffers=1 max-size-time=0 max-size-bytes=0 \
+            ! videoconvert \
+            ! videoflip method=counterclockwise \
+            ! videoscale add-borders=true \
+            ! video/x-raw,width=480,height=800 \
+            ! kmssink sync=false >"$PLAYLOG" 2>&1 &
+    else
+        # HDMI
+        nohup gst-launch-1.0 -e udpsrc port=5600 buffer-size=33554432 \
+            caps="application/x-rtp, media=(string)video, payload=(int)97, clock-rate=(int)90000, encoding-name=(string)H265" \
+            ! rtpjitterbuffer latency=0 mode=none \
+            ! rtph265depay ! h265parse \
+            ! video/x-h265,stream-format=byte-stream,alignment=au \
+            ! mppvideodec \
+            ! queue leaky=downstream max-size-buffers=1 max-size-time=0 max-size-bytes=0 \
+            ! videoconvert \
+            ! kmssink force-modesetting=true sync=false >"$PLAYLOG" 2>&1 &
+    fi
 }
 
 ensure_monitor() {

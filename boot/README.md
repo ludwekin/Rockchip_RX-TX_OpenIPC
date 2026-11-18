@@ -64,6 +64,44 @@ cat /sys/class/drm/card0-HDMI-A-1/status     # connected
 
 详见 `docs/DEBUG_NOTES.md` 第 9 节。
 
+## DSI 版本（3.1" 480x800）
+
+`boot4-dsi.itb`（41,772,544 字节）是 #4 内核 + **DSI DTB**：
+
+- sha256：`c910505b7f41cc292e299af2fec8448e159d57ab9b115bc6d9cebf7324057293`
+- DTB：`tools/fdt-dsi.dtb`（sha256 `9b44e989...`）
+  - `dsi@fe070000 = okay`
+  - `hdmi@fe0a0000 = disabled`
+  - 包含 3.1" 480x800 面板初始化和 CST128A 触摸节点
+- 本内核只有一个 CRTC：**HDMI 和 DSI 不能同时用**
+
+刷法同 HDMI：
+
+```bash
+adb push boot4-dsi.itb /tmp/boot4-dsi.itb
+adb shell 'dd if=/tmp/boot4-dsi.itb of=/dev/mmcblk0p3 bs=1M conv=fsync; sync'
+adb shell reboot
+```
+
+确认：
+
+```bash
+cat /proc/device-tree/dsi@fe070000/status   # okay
+cat /sys/class/drm/card0-DSI-1/status       # connected
+```
+
+板端原始备份（64MB p3，含同名 FIT）：
+
+```
+/root/boot-backup/boot-20261116-dsi.img
+```
+
+也可以从 HDMI 版重建 DSI 版（两者都是 #4 内核，只换 fdt）：
+
+```bash
+python3 tools/patch_inplace.py boot/boot4-hdmi.itb tools/fdt-dsi.dtb boot/boot4-dsi.itb
+```
+
 ## 重新生成 boot4-hdmi.itb
 
 ### 方法 A：patch_inplace（本仓库使用）

@@ -111,7 +111,7 @@ DESC = (
     '! rtpjitterbuffer latency=15 mode=none '
     '! rtph265depay ! h265parse '
     '! video/x-h265,stream-format=byte-stream,alignment=au '
-    '! mppvideodec fast-mode=true name=dec '
+    '! mppvideodec name=dec '
     '! queue leaky=downstream max-size-buffers=3 max-size-time=0 max-size-bytes=0 '
     '! videoconvert '
     '! textoverlay name=osd text="" valignment=top halignment=left '
