@@ -14,7 +14,7 @@ start_rx() {
 
 player_running() {
     if [ "$(cat /sys/class/drm/card0-DSI-1/status 2>/dev/null)" = "connected" ]; then
-        pgrep -f 'wfb-dsi-osd.py' >/dev/null
+        pgrep -x python3 >/dev/null
     else
         pgrep -x gst-launch-1.0 >/dev/null
     fi
@@ -116,7 +116,7 @@ while true; do
             sleep 8
         fi
     fi
-    if pgrep -x wfb_rx >/dev/null && ! pgrep -x gst-launch-1.0 >/dev/null; then
+    if pgrep -x wfb_rx >/dev/null && ! player_running; then
         log "player not running, starting"
         start_player
         sleep 4

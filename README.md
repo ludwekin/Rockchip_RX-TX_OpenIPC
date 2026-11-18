@@ -209,7 +209,7 @@ cat /sys/class/drm/card0-DSI-1/status       # connected
 
 `wfb-watchdog.sh` 会自动识别 DSI，启动 `scripts/wfb-dsi-osd.py`：
 
-- 视频 1280x720 横屏，`videoscale add-borders` 到 **480x270**，480x800 面板上下留黑边；
+- 视频保持原方向（`videoflip method=counterclockwise`），`videoscale add-borders` 全屏铺到 **480x800**；
 - OSD **400x240（1/4 屏）** 半透明黑底（0.45），横向；
 - 触摸（CST128A）切换两页：
   - WFB：CH/频率、RSSI、码率、RTP p/s、LOST、FPS、STREAM；

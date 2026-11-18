@@ -289,7 +289,7 @@ grep -E 'SESSION|PKT|Unable to decrypt' /tmp/wfb_rx.log | tail
     ! cairooverlay name=osd ! kmssink sync=false
 ```
 
-- 视频 480x270 横屏居中，上下黑边；OSD 400x240（1/4 屏）半透明。
+- 视频保持原方向（videoflip 逆时针）全屏 480x800；OSD 400x240 横版半透明。
 - 触摸 CST128A 切换 WFB/RK3566 两页。
 - 仍然不要用 `mppvideodec fast-mode=true`。
 - 触摸 CST128A：i2c1 `i2c@fe5a0000` @0x38；`cst128a_ts.ko` +

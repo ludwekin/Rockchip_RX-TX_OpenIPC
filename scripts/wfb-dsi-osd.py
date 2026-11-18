@@ -243,7 +243,7 @@ DESC = ('udpsrc port=5600 buffer-size=33554432 '
         '! rtpjitterbuffer latency=0 mode=none ! rtph265depay ! h265parse '
         '! video/x-h265,stream-format=byte-stream,alignment=au ! mppvideodec '
         '! queue leaky=downstream max-size-buffers=1 max-size-time=0 max-size-bytes=0 '
-        '! videoconvert ! videoscale add-borders=true '
+        '! videoconvert ! videoflip method=counterclockwise ! videoscale add-borders=true '
         '! video/x-raw,width=480,height=800 ! videoconvert ! video/x-raw,format=BGRA '
         '! cairooverlay name=osd ! kmssink sync=false')
 
