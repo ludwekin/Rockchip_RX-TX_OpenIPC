@@ -54,7 +54,7 @@ Video Port0: ACTIVE
 （GStreamer + cairooverlay + 触摸）：
 
 - 视频保持原方向（`videoflip method=counterclockwise`），`videoscale add-borders` 全屏铺到 **480x800**；
-- OSD **400x240（1/4 屏）** 半透明黑底（0.45），横向；
+- OSD **400x240（1/4 屏）** 半透明黑底（0.45），横向；OSD 在 480x800 画布内旋转 90° 绘制，物理屏上文字为横版；
 - 触摸（CST128A，`event5`）切换两页：
   - 第 1 页 WFB：CH/频率、RSSI、码率、RTP p/s、LOST、FPS、STREAM；
   - 第 2 页 RK3566：CPU%/频率、LOAD、SOC/GPU 温度、内存、DDR/GPU/NPU/VDEC、UP；

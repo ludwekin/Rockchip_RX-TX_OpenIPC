@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import glob, os, re, select, struct, threading, time
+import math
 import cairo, gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
@@ -163,31 +164,35 @@ def build_lines():
             'TOUCH -> WFB']
 
 def draw_box(cr, lines):
-    x, y, w, h = 8, 8, 400, 240
+    x, y, w, h = 8, 408, 400, 240
+    cr.save()
+    cr.translate(x, y)
+    cr.rotate(-math.pi / 2)
     cr.set_source_rgba(0, 0, 0, 0.45)
-    cr.rectangle(x, y, w, h)
+    cr.rectangle(0, 0, w, h)
     cr.fill()
     cr.set_source_rgba(1, 1, 1, 0.25)
     cr.set_line_width(2)
-    cr.rectangle(x, y, w, h)
+    cr.rectangle(0, 0, w, h)
     cr.stroke()
     cr.select_font_face('DejaVu Sans Mono', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     cr.set_font_size(16)
     cr.set_source_rgb(0.3, 1.0, 0.7)
-    cr.move_to(x + 12, y + 26)
+    cr.move_to(12, 26)
     cr.show_text(lines[0])
     cr.select_font_face('DejaVu Sans Mono', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
     cr.set_font_size(13)
     cr.set_source_rgb(1, 1, 1)
-    yy = y + 54
+    yy = 54
     for line in lines[1:-1]:
-        cr.move_to(x + 12, yy)
+        cr.move_to(12, yy)
         cr.show_text(line)
         yy += 20
     cr.set_font_size(12)
     cr.set_source_rgb(1.0, 0.85, 0.2)
-    cr.move_to(x + 12, y + h - 16)
+    cr.move_to(12, h - 16)
     cr.show_text(lines[-1])
+    cr.restore()
 
 def on_draw(osd, cr, ts, dur):
     global frames
