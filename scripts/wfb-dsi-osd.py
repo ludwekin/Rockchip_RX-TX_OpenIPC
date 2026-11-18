@@ -168,7 +168,10 @@ def draw_box(cr, lines):
     cr.save()
     cr.translate(x, y)
     cr.rotate(-math.pi / 2)
-    cr.set_source_rgba(0, 0, 0, 0.45)
+    if page == 0:
+        cr.set_source_rgba(0.0, 0.25, 0.12, 0.45)
+    else:
+        cr.set_source_rgba(0.0, 0.12, 0.30, 0.45)
     cr.rectangle(0, 0, w, h)
     cr.fill()
     cr.set_source_rgba(1, 1, 1, 0.25)
@@ -177,7 +180,7 @@ def draw_box(cr, lines):
     cr.stroke()
     cr.select_font_face('DejaVu Sans Mono', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     cr.set_font_size(16)
-    cr.set_source_rgb(0.3, 1.0, 0.7)
+    cr.set_source_rgb(0.3, 1.0, 0.7) if page == 0 else cr.set_source_rgb(0.4, 0.8, 1.0)
     cr.move_to(12, 26)
     cr.show_text(lines[0])
     cr.select_font_face('DejaVu Sans Mono', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
