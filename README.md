@@ -47,11 +47,17 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 │   ├── build.sh                # 交叉编译脚本
 │   ├── patches/
 │   │   └── 0001-rx-buffer-and-no-usb-rx-agg.patch
+│   ├── host-8812au/
+│   │   └── 0001-cfg80211-set-monitor-channel-6.8.patch
 │   └── README.md
 ├── scripts/
 │   ├── wfb-watchdog.sh         # 推荐：自动配置 + 收流 + 播放 + 断流重连
 │   ├── wfb-dsi-osd.py          # DSI 480x800 横屏 + 半透明性能 OSD + 触摸翻页
 │   ├── wfb-hdmi.sh             # 一次性启动版
+│   ├── host-rx-8812au.sh       # 本机 RTL8812AU 接收
+│   ├── host-player.sh          # 本机 GStreamer 播放
+│   ├── host-internet-8852bu.sh # 本机 8852BU 恢复上网
+│   ├── host-backup-rx-8852bu.sh# 本机 8852BU 备份 RX
 │   ├── f3.sh                   # MPP 解码性能对比测试
 │   ├── openipc-rx-setup.sh     # 旧版 monitor/channel 设置
 │   ├── openipc-start.sh        # 旧版 wfb_rx 启动
@@ -67,6 +73,7 @@ RTL8812AU 监听 5.8G，`wfb_rx` 解密重组，RK MPP 硬解 H265，直接输�
 ├── docs/
 │   ├── DEBUG_NOTES.md          # 详细踩坑记录
 │   ├── DSI.md                  # 3.1" MIPI DSI + 触摸
+│   ├── HOST_RX.md              # 本机 x86 Ubuntu 接收（8812AU/8852BU）
 │   └── AIR_TX.md               # 天空端 TX 侧参数模板
 └── keys/README.md              # 密钥生成/配对说明（不含密钥）
 ```
@@ -279,7 +286,16 @@ python3 tools/patch_inplace.py /path/to/boot_min.img tools/fdt-orig.dtb boot4-hd
 
 ---
 
-## 7. 许可与来源
+## 7. 本机（x86 Ubuntu）接收
+
+本机也可以直接收图传，详见 `docs/HOST_RX.md`。实测：
+
+- RTL8812AU（`0bda:881a`，aircrack `88XXau`）→ monitor 161 接收
+- RTL8852BU（`0bda:b832`，`rtw89`）→ managed 上网，或切 monitor 做备份 RX
+- 脚本：`scripts/host-rx-8812au.sh`、`host-player.sh`、`host-internet-8852bu.sh`、`host-backup-rx-8852bu.sh`
+- 内核 6.8.0-149 需要 `driver/host-8812au/0001-cfg80211-set-monitor-channel-6.8.patch`
+
+## 8. 许可与来源
 
 - 本仓库的脚本/文档：MIT（见 LICENSE）
 - `driver/` 补丁与 `88XXau.ko`：GPLv2，源自
