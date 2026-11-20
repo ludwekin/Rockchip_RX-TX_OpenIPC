@@ -295,7 +295,30 @@ python3 tools/patch_inplace.py /path/to/boot_min.img tools/fdt-orig.dtb boot4-hd
 - 脚本：`scripts/host-rx-8812au.sh`、`host-player.sh`、`host-internet-8852bu.sh`、`host-backup-rx-8852bu.sh`
 - 内核 6.8.0-149 需要 `driver/host-8812au/0001-cfg80211-set-monitor-channel-6.8.patch`
 
-## 8. 许可与来源
+## 8. MPP / librga / GStreamer 升级 + GPU 播放器
+
+板子自带的 2021 年用户态库（MPP、librga 1.3.2、gst-rockchipmpp）和 6.1 内核的
+`mpp_rkvdec2` / RGA 驱动不匹配，`RgaBlit` 全部失败。已用 SDK 源码在板子上原生重编：
+
+- MPP：新版（`scripts/build-mpp-native.sh`）
+- librga：1.3.2 → **1.10.5**（`scripts/build-rga-native.sh`）
+- gst-rockchipmpp：重编 + `driver/gst-rockchipmpp/0001-native-build-perf.patch`
+  （ION + 24 buffer、去掉 MPP 超时、不启用逐帧 RGA）
+
+播放器换成 GPU 链（`scripts/openipc-gl-player.sh` +
+`systemd/openipc-video-kms.service`）：
+
+```
+mppvideodec ! glupload ! glcolorconvert ! glvideoflip ! glimagesink
+```
+
+实测完整链 **28.66fps、dropped=0**。systemd 下必须带 `GST_GL_API=gles2`，否则
+Mali 报 `EGL_BAD_PARAMETER`。注意不要用 `filesink` 写 `/tmp` 测解码帧率（会把
+管线压到 ~18fps，是写盘瓶颈，不是解码）。详见 `docs/UPGRADE_MPP_RGA_GST.md`。
+
+---
+
+## 9. 许可与来源
 
 - 本仓库的脚本/文档：MIT（见 LICENSE）
 - `driver/` 补丁与 `88XXau.ko`：GPLv2，源自

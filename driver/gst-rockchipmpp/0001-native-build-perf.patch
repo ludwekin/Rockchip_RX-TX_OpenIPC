@@ -1,0 +1,42 @@
+--- a/gst/rockchipmpp/gstmppallocator.c
++++ b/gst/rockchipmpp/gstmppallocator.c
+@@ -285,10 +285,12 @@
+ 
+   static gint num_mpp_alloc = 0;
+ 
+-  if (mpp_buffer_group_get_internal (&group, MPP_BUFFER_TYPE_DRM))
++  if (mpp_buffer_group_get_internal (&group, MPP_BUFFER_TYPE_ION))
+     return FALSE;
+ 
+-  if (mpp_buffer_group_get_external (&ext_group, MPP_BUFFER_TYPE_DRM)) {
++  mpp_buffer_group_limit_config (group, 0, 24);
++
++  if (mpp_buffer_group_get_external (&ext_group, MPP_BUFFER_TYPE_ION)) {
+     mpp_buffer_group_put (group);
+     return FALSE;
+   }
+--- a/gst/rockchipmpp/gstmppvideodec.c
++++ b/gst/rockchipmpp/gstmppvideodec.c
+@@ -241,7 +241,8 @@
+   GstMppDec *mppdec = GST_MPP_DEC (decoder);
+   MPP_RET ret;
+ 
+-  mppdec->mpi->control (mppdec->mpp_ctx, MPP_SET_INPUT_TIMEOUT, &timeout_ms);
++  /* Timeout control removed to match mpi_dec_test behaviour. */
++  (void) timeout_ms;
+ 
+   ret = mppdec->mpi->decode_put_packet (mppdec->mpp_ctx, mpkt);
+   if (!ret)
+@@ -257,10 +258,8 @@
+   GstMppDec *mppdec = GST_MPP_DEC (decoder);
+   MppFrame mframe = NULL;
+ 
+-  if (self->poll_timeout != timeout_ms) {
+-    self->poll_timeout = timeout_ms;
+-    mppdec->mpi->control (mppdec->mpp_ctx, MPP_SET_OUTPUT_TIMEOUT, &timeout_ms);
+-  }
++  /* Timeout control removed to match mpi_dec_test behaviour. */
++  (void) timeout_ms;
+ 
+   mppdec->mpi->decode_get_frame (mppdec->mpp_ctx, &mframe);
+ 

@@ -1,0 +1,18 @@
+[Unit]
+Description=OpenIPC video GL player (DSI, MPP hardware decode)
+Conflicts=lightdm.service openipc-hdmi.service
+After=openipc-rx.service
+Wants=openipc-rx.service
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=HOME=/root
+Environment=XDG_RUNTIME_DIR=/run/user/0
+ExecStartPre=/bin/sleep 6
+ExecStart=/usr/local/sbin/openipc-gl-player.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
