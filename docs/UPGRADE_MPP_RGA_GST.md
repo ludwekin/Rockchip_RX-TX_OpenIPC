@@ -64,7 +64,14 @@ mppvideodec ! queue leaky ! glupload ! glcolorconvert ! glvideoflip ! glimagesin
 
 - `scripts/openipc-gl-player.sh`：播放器（读 `/etc/openipc-rx.conf` 的 `RX_PORT`）
 - `systemd/openipc-video-kms.service`：开机自启，替换原来的 Python OSD
-- `driver/88xxau/88xxau.conf`：`rtw_usb_rxagg_mode=2` + `rtw_rxgain_offset_5gh=16`
+- `driver/88xxau/88xxau.conf`：只开 `rtw_usb_rxagg_mode=2`
+  （**不要**加 `rtw_rxgain_offset_*`：8812AU 的 HAL 根本不读这些参数，只有 8814A 用；
+  远航需要满灵敏度，不能固定降增益）
+
+> 近距离（1~2m）RSSI 到 -20 多 dBm 时 8812AU 前端会压缩丢包，这是接收机饱和。
+> 8812AU 没有可用的“降增益”驱动旋钮（`rtw_rxgain_offset_*` 是 8814A 专用）。
+> 台架测试请把天空端拿远或加 6~10dB 衰减器；飞行时用满增益，**不要**为了台架
+> 流畅去降增益。
 
 > **关键坑**：systemd 服务必须带 `GST_GL_API=gles2`（以及 `GST_GL_PLATFORM=egl`、
 > `GST_GL_WINDOW=gbm`），否则 Mali 只支持 GLES2，绑桌面 GL 会报
